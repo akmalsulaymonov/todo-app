@@ -17,8 +17,50 @@ func main() {
 
 	app := fiber.New()
 
+	todos := []Todo{ // slice of Todo
+
+	}
+
+	// test url
 	app.Get("/aki", func(c *fiber.Ctx) error {
 		return c.SendString("OK")
+	})
+
+	// add and get list of todos
+	app.Post("/api/todos", func(c *fiber.Ctx) error {
+		todo := &Todo{}
+
+		if err := c.BodyParser(todo); err != nil {
+			return err
+		}
+
+		todo.ID = len(todos) + 1
+		todos = append(todos, *todo)
+
+		return c.JSON(todos)
+	})
+
+	// update todo to done by id and get list of todos
+	app.Patch("/api/todos/:id/done", func(c *fiber.Ctx) error {
+		id, err := c.ParamsInt("id")
+
+		if err != nil {
+			return c.Status(401).SendString("Invalid id")
+		}
+
+		for i, t := range todos {
+			if t.ID == id {
+				todos[i].Done = true
+				break
+			}
+		}
+
+		return c.JSON(todos)
+	})
+
+	// get list of todos
+	app.Get("/api/todos", func(c *fiber.Ctx) error {
+		return c.JSON(todos)
 	})
 
 	log.Fatal(app.Listen(":4000"))
